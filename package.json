@@ -1,0 +1,9 @@
+{
+  "name": "neko-kbbi-api",
+  "version": "1.0.0",
+  "description": "KBBI Word Checker API for Sambung Kata — by Neko_Omen",
+  "author": "Neko_Omen",
+  "license": "MIT",
+  "type": "module",
+  "private": true
+}
