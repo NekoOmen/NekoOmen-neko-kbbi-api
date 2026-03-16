@@ -1,0 +1,58 @@
+name: Build & Deploy KBBI API
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Auto-update word list every Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download KBBI Word List
+        run: |
+          echo "=== Downloading KBBI word list ==="
+          mkdir -p _raw
+          curl -sL "https://raw.githubusercontent.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI/master/list_1.0.0.txt" -o _raw/list1.txt
+          curl -sL "https://raw.githubusercontent.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI/master/list_0.5.1.txt" -o _raw/list2.txt
+          echo "list1: $(wc -l < _raw/list1.txt) lines"
+          echo "list2: $(wc -l < _raw/list2.txt) lines"
+
+      - name: Build JSON API Files
+        run: node scripts/build-wordlist.js
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
